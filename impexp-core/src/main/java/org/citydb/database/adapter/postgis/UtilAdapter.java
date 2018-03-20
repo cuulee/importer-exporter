@@ -193,6 +193,34 @@ public class UtilAdapter extends AbstractUtilAdapter {
 	}
 
 	@Override
+	protected void changeSrs(DatabaseSrs srs, boolean doTransform, String schema, Connection connection) throws SQLException {
+		try {
+			interruptableCallableStatement = connection.prepareCall("{call " + databaseAdapter.getSQLAdapter().resolveDatabaseOperationName("citydb_srs.change_schema_srid") + "(?,?,?,?)}");
+			interruptableCallableStatement.setInt(1, srs.getSrid());
+			interruptableCallableStatement.setString(2, srs.getGMLSrsName());
+			interruptableCallableStatement.setInt(3, doTransform ? 1 : 0);
+			interruptableCallableStatement.setString(4, schema);
+			interruptableCallableStatement.executeUpdate();
+
+		} catch (SQLException e) {
+			if (!isInterrupted)
+				throw e;
+		} finally {
+			if (interruptableCallableStatement != null) {
+				try {
+					interruptableCallableStatement.close();
+				} catch (SQLException e) {
+					throw e;
+				}
+
+				interruptableCallableStatement = null;
+			}
+
+			isInterrupted = false;
+		}		
+	}
+	
+	@Override
 	protected String[] createDatabaseReport(String schema, Connection connection) throws SQLException {
 		try {
 			interruptableCallableStatement = connection.prepareCall("{? = call " + databaseAdapter.getSQLAdapter().resolveDatabaseOperationName("citydb_stat.table_contents") + "(?)}");

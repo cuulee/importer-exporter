@@ -66,6 +66,7 @@ public abstract class AbstractUtilAdapter {
 	protected abstract void getCityDBVersion(DatabaseMetaData metaData, Connection connection) throws SQLException;
 	protected abstract void getDatabaseMetaData(DatabaseMetaData metaData, Connection connection) throws SQLException;
 	protected abstract void getSrsInfo(DatabaseSrs srs, Connection connection) throws SQLException;
+	protected abstract void changeSrs(DatabaseSrs srs, boolean doTransform, String schema, Connection connection) throws SQLException;
 	protected abstract String[] createDatabaseReport(String schema, Connection connection) throws SQLException;
 	protected abstract BoundingBox calcBoundingBox(String schema, List<Integer> classIds, Connection connection) throws SQLException;
 	protected abstract BoundingBox createBoundingBoxes(List<Integer> classIds, boolean onlyIfNull, Connection connection) throws SQLException;
@@ -130,7 +131,26 @@ public abstract class AbstractUtilAdapter {
 			}
 		}
 	}
-	
+
+	public void changeSrs(DatabaseSrs srs, boolean doTransform, String schema) throws SQLException {
+		Connection conn = null;
+
+		try {
+			conn = databaseAdapter.connectionPool.getConnection();			
+			changeSrs(srs, doTransform, schema, conn);
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+					throw e;
+				}
+
+				conn = null;
+			}
+		}
+	}
+
 	public List<ADEMetadata> getADEInfo() {
 		ArrayList<ADEMetadata> ades = new ArrayList<>();
 		Connection conn = null;
